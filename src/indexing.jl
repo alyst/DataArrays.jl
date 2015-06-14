@@ -245,7 +245,8 @@ end
         end
     else
         X = x
-        @ncall N Base.setindex_shape_check X I
+        idxlens = @ncall N Base.index_lengths X I
+        @ncall N Base.setindex_shape_check X (d->idxlens[d])
         k = 1
         if isa(A, PooledDataArray) && isa(X, PooledDataArray)
             # When putting one PDA into another, first unify the pools

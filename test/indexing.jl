@@ -65,7 +65,7 @@ function run_tests(datype)
     end
 
     # getindex with DataVectors with missingness throws
-    @test_throws NAException A[@data([1, 2, 3, NA])]
+    @test_throws MethodError A[@data([1, 2, 3, NA])]
 
     # setindex! with scalar indices
     data = rand(10, 10)

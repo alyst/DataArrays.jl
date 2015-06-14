@@ -138,11 +138,11 @@ module TestDataArrays
 
     # Base.getindex{S, T}(x::Vector{S}, inds::AbstractDataArray{T})
     dinds = @data([1, 2, NA])
-    @test_throws NAException [1.0, 2.0, 3.0, 4.0][dinds]
+    @test_throws MethodError [1.0, 2.0, 3.0, 4.0][dinds]
 
     # Base.getindex{S, T}(x::Array{S}, inds::AbstractDataArray{T})
     dinds = @data([1, 2, NA])
-    @test_throws NAException [1.0 2.0; 3.0 4.0][dinds]
+    @test_throws MethodError [1.0 2.0; 3.0 4.0][dinds]
 
     # Base.getindex(d::DataArray, i::SingleIndex)
     da = @data([1, 2, NA, 4])
@@ -159,7 +159,7 @@ module TestDataArrays
     # Base.getindex(d::DataArray, inds::AbstractDataVector)
     da = @data([1, 2, NA, 4])
     dinds = @data([1, 2, NA, 2])
-    @test_throws NAException da[dinds]
+    @test_throws MethodError da[dinds]
 
     # Base.getindex{T <: Number, N}(d::DataArray{T,N}, inds::BooleanIndex)
     # da = @data([1, 2, NA, 4])

@@ -700,10 +700,10 @@ end
 #'
 #' dv = @data [1, -2, 1, NA, 4]
 #' distinct_values = unique(dv)
-function Base.unique{T}(da::DataArray{T}) # -> DataVector{T}
+function Base.unique{T}(da::DataArray{T}; skipna::Bool = false) # -> DataVector{T}
     unique_values, firstna = finduniques(da)
     n = length(unique_values)
-    if firstna > 0
+    if !skipna && firstna > 0
         res = DataArray(Array(T, n + 1))
         i = 1
         for val in unique_values

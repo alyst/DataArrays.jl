@@ -284,7 +284,7 @@ end
 #'
 #' pdv = @pdata [1, -2, 1, NA, 4]
 #' distinct_values = unique(pdv)
-function Base.unique{T}(pda::PooledDataArray{T})
+function Base.unique{T}(pda::PooledDataArray{T}; skipna::Bool=false)
     n = length(pda)
     nlevels = length(pda.pool)
     unique_values = Array(T, 0)
@@ -309,7 +309,7 @@ function Base.unique{T}(pda::PooledDataArray{T})
         end
     end
 
-    if firstna > 0
+    if !skipna && firstna > 0
         res = DataArray(Array(T, nlevels + 1))
         i = 0
         for val in unique_values

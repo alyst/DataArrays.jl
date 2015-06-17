@@ -270,11 +270,12 @@ end
 #' @description
 #'
 #' Return a DataVector containing the unique values of a `PooledDataArray`,
-#' in the order they appear in the data, including `NA` if any missing entries
-#' are encountered. For `PooledDataArray`s, this function is much less efficient
+#' in the order they appear in the data.
+#' For `PooledDataArray`s, this function is much less efficient
 #' than `levels`, which does not return the values in the same order.
 #'
 #' @param da::DataArray{T} `DataArray` whose unique values are desired.
+#' @param skipna::Bool if NA entries should be excluded from consideration.
 #'
 #' @returns dv::DataVector{T} `DataVector` containing the unique values
 #'          from `pda`, in the order they appear, including `NA` if there are

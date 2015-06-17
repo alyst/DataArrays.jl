@@ -687,10 +687,10 @@ end
 #' @description
 #'
 #' Return a DataVector containing the unique values of a `DataArray`,
-#' in the order they appear in the data, including `NA` if any missing entries
-#' are encountered.
+#' in the order they appear in the data.
 #'
 #' @param da::DataArray{T} `DataArray` whose unique values are desired.
+#' @param skipna::Bool if NA entries should be excluded from consideration.
 #'
 #' @returns dv::DataVector{T} `DataVector` containing the unique values
 #'          from `da`, in the order they appear, including `NA` if there are

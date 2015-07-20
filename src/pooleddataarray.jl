@@ -251,8 +251,15 @@ end
 ##
 ##############################################################################
 
-function compact{T,R<:Integer,N}(d::PooledDataArray{T,R,N})
-    sz = length(d.pool)
+#' @description
+#' Compacts the representation of PooledDataArray references by
+#' selecting the data type that fits the number of unique elements best.
+#'
+#' @param sz pool size hint
+function compact{T,R<:Integer,N}(d::PooledDataArray{T,R,N}, sz = length(d.pool))
+    if sz < length(d.pool)
+      sz = length(d.pool)
+    end
 
     REFTYPE = sz <= typemax(UInt8)  ? UInt8 :
               sz <= typemax(UInt16) ? UInt16 :
@@ -260,7 +267,7 @@ function compact{T,R<:Integer,N}(d::PooledDataArray{T,R,N})
                                       UInt64
 
     if REFTYPE == R
-        return d
+        return d # no recoding necessary
     end
 
     newrefs = convert(Array{REFTYPE, N}, d.refs)
@@ -633,18 +640,23 @@ end
 ##
 ##############################################################################
 
+#' @param sz pool size hint, automatically adjusted
+#'           to fit all unique elements
 function PooledDataVecs{S,Q<:Integer,R<:Integer,N}(v1::PooledDataArray{S,Q,N},
-                                                   v2::PooledDataArray{S,R,N})
+                                                   v2::PooledDataArray{S,R,N},
+                                                   sz::Int = 0)
     pool = sort(unique(S[v1.pool; v2.pool]))
-    sz = length(pool)
+    if sz < length(pool)
+      sz = length(pool)
+    end
 
     REFTYPE = sz <= typemax(UInt8)  ? UInt8 :
               sz <= typemax(UInt16) ? UInt16 :
               sz <= typemax(UInt32) ? UInt32 :
                                       UInt64
 
-    return ( PooledDataArray(encode_refs(REFTYPE, pool, v1), pool),
-             PooledDataArray(encode_refs(REFTYPE, pool, v2), pool) )
+    return (PooledDataArray(encode_refs(REFTYPE, pool, v1), pool),
+            PooledDataArray(encode_refs(REFTYPE, pool, v2), pool))
 end
 
 function PooledDataVecs{S,R<:Integer,N}(v1::PooledDataArray{S,R,N},

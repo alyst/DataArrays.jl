@@ -604,18 +604,37 @@ Base.sortperm{V}(x::AbstractVector, a::Base.Sort.Algorithm, o::FastPerm{Base.Sor
 Base.sortperm{V}(x::AbstractVector, a::Base.Sort.Algorithm, o::FastPerm{Base.Sort.ReverseOrdering,V}) = x[reverse(sortperm(o.vec))]
 Perm{O<:Base.Sort.Ordering}(o::O, v::PooledDataVector) = FastPerm(o, v)
 
+# rebuild reference array using the new pool
+function encode_refs{R<:Integer,T,Q<:Integer}(::Type{R}, pool::AbstractArray{T}, v::PooledDataArray{T,Q})
+    tidx = convert(Vector{R}, findat(pool, v.pool))
+    refs = zeros(R, size(v))
+    for i in 1:length(refs)
+        if v.refs[i] != 0
+            refs[i] = tidx[v.refs[i]]
+        end
+    end
+    return RefArray(refs)
+end
 
+# build reference array using the mapping from the pool value to its reference index
+function encode_refs{T,R<:Integer}(pool2ref::Dict{T,R}, v::AbstractArray{T})
+    refs = zeros( R, size(v) )
+    for i in 1:length(v)
+        if !isna(v[i]) refs[i] = pool2ref[v[i]] end
+    end
+    return RefArray(refs)
+end
 
 ##############################################################################
 ##
-## PooledDataVecs: EXPLANATION SHOULD GO HERE
+## PooledDataVecs: Given two pooled data arrays over the separate pools,
+##                 create two new pooled data arrays that share the same pool
 ##
 ##############################################################################
-
 
 function PooledDataVecs{S,Q<:Integer,R<:Integer,N}(v1::PooledDataArray{S,Q,N},
                                                    v2::PooledDataArray{S,R,N})
-    pool = sort(unique([v1.pool, v2.pool]))
+    pool = sort(unique(S[v1.pool; v2.pool]))
     sz = length(pool)
 
     REFTYPE = sz <= typemax(UInt8)  ? UInt8 :
@@ -623,40 +642,19 @@ function PooledDataVecs{S,Q<:Integer,R<:Integer,N}(v1::PooledDataArray{S,Q,N},
               sz <= typemax(UInt32) ? UInt32 :
                                       UInt64
 
-    tidx1 = convert(Vector{REFTYPE}, findat(pool, v1.pool))
-    tidx2 = convert(Vector{REFTYPE}, findat(pool, v2.pool))
-    refs1 = zeros(REFTYPE, length(v1))
-    refs2 = zeros(REFTYPE, length(v2))
-    for i in 1:length(refs1)
-        if v1.refs[i] != 0
-            refs1[i] = tidx1[v1.refs[i]]
-        end
-    end
-    for i in 1:length(refs2)
-        if v2.refs[i] != 0
-            refs2[i] = tidx2[v2.refs[i]]
-        end
-    end
-    return (PooledDataArray(RefArray(refs1), pool),
-            PooledDataArray(RefArray(refs2), pool))
+    return ( PooledDataArray(encode_refs(REFTYPE, pool, v1), pool),
+             PooledDataArray(encode_refs(REFTYPE, pool, v2), pool) )
 end
 
 function PooledDataVecs{S,R<:Integer,N}(v1::PooledDataArray{S,R,N},
                                         v2::AbstractArray{S,N})
-    return PooledDataVecs(v1,
-                          PooledDataArray(v2))
-end
-function PooledDataVecs{S,R<:Integer,N}(v1::PooledDataArray{S,R,N},
-                                        v2::AbstractArray{S,N})
-    return PooledDataVecs(v1,
-                          PooledDataArray(v2))
+    return PooledDataVecs(v1, PooledDataArray(v2))
 end
 
 ####
 function PooledDataVecs{S,R<:Integer,N}(v1::AbstractArray{S,N},
                                         v2::PooledDataArray{S,R,N})
-    return PooledDataVecs(PooledDataArray(v1),
-                          v2)
+    return PooledDataVecs(PooledDataArray(v1), v2)
 end
 
 function PooledDataVecs(v1::AbstractArray,
@@ -668,7 +666,6 @@ function PooledDataVecs(v1::AbstractArray,
     refs1 = Array(DEFAULT_POOLED_REF_TYPE, size(v1))
     refs2 = Array(DEFAULT_POOLED_REF_TYPE, size(v2))
     poolref = Dict{promote_type(eltype(v1), eltype(v2)), DEFAULT_POOLED_REF_TYPE}()
-    maxref = 0
 
     # loop through once to fill the poolref dict
     for i = 1:length(v1)
@@ -690,25 +687,8 @@ function PooledDataVecs(v1::AbstractArray,
         i += 1
     end
 
-    # fill in newrefs
-    zeroval = zero(DEFAULT_POOLED_REF_TYPE)
-    for i = 1:length(v1)
-        if isna(v1[i])
-            refs1[i] = zeroval
-        else
-            refs1[i] = poolref[v1[i]]
-        end
-    end
-    for i = 1:length(v2)
-        if isna(v2[i])
-            refs2[i] = zeroval
-        else
-            refs2[i] = poolref[v2[i]]
-        end
-    end
-
-    return (PooledDataArray(RefArray(refs1), pool),
-            PooledDataArray(RefArray(refs2), pool))
+    return (PooledDataArray(encode_refs(poolref, v1), pool),
+            PooledDataArray(encode_refs(poolref, v2), pool))
 end
 
 Base.convert{S,T,R1<:Integer,R2<:Integer,N}(::Type{PooledDataArray{S,R1,N}}, pda::PooledDataArray{T,R2,N}) =

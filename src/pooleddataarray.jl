@@ -660,18 +660,19 @@ function PooledDataVecs{S,Q<:Integer,R<:Integer,N}(v1::PooledDataArray{S,Q,N},
 end
 
 function PooledDataVecs{S,R<:Integer,N}(v1::PooledDataArray{S,R,N},
-                                        v2::AbstractArray{S,N})
-    return PooledDataVecs(v1, PooledDataArray(v2))
+                                        v2::AbstractArray{S,N}, sz::Int = 0)
+    return PooledDataVecs(v1, PooledDataArray(v2), sz)
 end
 
 ####
 function PooledDataVecs{S,R<:Integer,N}(v1::AbstractArray{S,N},
-                                        v2::PooledDataArray{S,R,N})
-    return PooledDataVecs(PooledDataArray(v1), v2)
+                                        v2::PooledDataArray{S,R,N}, sz::Int = 0)
+    return PooledDataVecs(PooledDataArray(v1), v2, sz)
 end
 
 function PooledDataVecs(v1::AbstractArray,
-                        v2::AbstractArray)
+                        v2::AbstractArray,
+                        sz::Int = 0)
 
     ## Return two PooledDataVecs that share the same pool.
 
@@ -701,7 +702,7 @@ function PooledDataVecs(v1::AbstractArray,
     end
 
     return (PooledDataArray(encode_refs(poolref, v1), pool),
-            PooledDataArray(encode_refs(poolref, v2), pool))
+            PooledDataArray(encode_refs(poolref, v2), pool), sz)
 end
 
 Base.convert{S,T,R1<:Integer,R2<:Integer,N}(::Type{PooledDataArray{S,R1,N}}, pda::PooledDataArray{T,R2,N}) =

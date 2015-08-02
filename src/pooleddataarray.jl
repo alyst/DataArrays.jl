@@ -624,13 +624,11 @@ function encode_refs{R<:Integer,T,Q<:Integer}(::Type{R}, pool::AbstractArray{T},
 end
 
 # build reference array using the mapping from the pool value to its reference index
-function encode_refs{T,R<:Integer}(pool2ref::Dict{T,R}, v::AbstractArray{T})
-    refs = zeros( R, size(v) )
-    for i in 1:length(v)
-        if !isna(v[i]) refs[i] = pool2ref[v[i]] end
-    end
-    return RefArray(refs)
-end
+encode_refs{T,R<:Integer}(pool2ref::Dict{T,R}, v::AbstractArray) =
+    RefArray(R[pool2ref[vv] for vv in v])
+
+encode_refs{T,R<:Integer}(pool2ref::Dict{T,R}, v::AbstractDataArray) =
+    RefArray(R[(!isna(vv) ? pool2ref[vv] : 0) for vv in v])
 
 ##############################################################################
 ##

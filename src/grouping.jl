@@ -1,9 +1,12 @@
+# returns a tuple
+# 1) permutation of x: y[result] = x sorts x in y
+# 2) indices of each new group starts in y
+# 3) group sizes
 function groupsort_indexer(x::AbstractVector, ngroups::Integer, nalast::Bool=false)
     # translated from Wes McKinney's groupsort_indexer in pandas (file: src/groupby.pyx).
 
     # count group sizes, x[i] == 0 means NA
     n = length(x)
-    # counts = x.pool
     counts = zeros(Int, ngroups + 1)
     for i = 1:n
         counts[x[i] + 1] += 1
